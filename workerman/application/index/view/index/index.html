@@ -16,7 +16,7 @@
 <div class='fui-page chatDetail-page'>
     <div class="chat-header flex">
         <i class="icon icon-toleft t-48"></i>
-        <span class="shop-titlte t-30">商店</span>
+        <span class="shop-titlte t-30"></span>
         <span class="shop-online t-26"></span>
         <span class="into-shop">进店</span>
     </div>
@@ -25,16 +25,16 @@
             <p style="display: none;text-align: center;padding-top: 0.5rem" id="more"><a>加载更多</a></p>
             <p class="chat-time"><span class="time">2017-11-12</span></p>
 
-            <!--<div class="chat-text section-left flex">-->
-            <!--<span class="char-img" style="background-image: url(http://chat.com/static/newcj/img/123.jpg)"></span>-->
-            <!--<span class="text"><i class="icon icon-sanjiao4 t-32"></i>你好</span>-->
-        <!--</div>-->
+            <!-- <div class="chat-text section-left flex">
+              <span class="char-img" style="background-image: url(http://chat.com/static/newcj/img/123.jpg)"></span>
+              <span class="text"><i class="icon icon-sanjiao4 t-32"></i>你好</span>
+            </div> -->
 
-            <!--<div class="chat-text section-right flex">-->
-            <!--<span class="text"><i class="icon icon-sanjiao3 t-32"></i>你好</span>-->
-            <!--<span class="char-img" style="background-image: url(http://chat.com/static/newcj/img/132.jpg)"></span>-->
-           <!--</div>-->
-
+            <!-- <div class="chat-text section-right flex">
+            <span class="text"><i class="icon icon-sanjiao3 t-32"></i>你好</span>
+            <span class="char-img" style="background-image: url(http://chat.com/static/newcj/img/132.jpg)"></span>
+           </div>
+ -->
         </div>
     </div>
     <div class="fix-send flex footer-bar">
@@ -47,13 +47,42 @@
 </div>
 
 <script>
+     var API = 'http://chat.com/api/Chat/';
+     var lujing = 'http://chat.com/static/images/';
+     var fromId = {$fromId};
+     var toId = {$toId};
+
+     var fromimage = '',toimage='';
+    
 
      var ws =  new WebSocket("ws://127.0.0.1:8282");
 
       ws.onmessage = function(e){
 
-          console.log(e);
+          
+          var text = JSON.parse(e.data);
+         
+          switch(text.type){
+            case 'db':
 
+                save_message(text);
+
+              break;
+            case 'bind':
+             
+               var message = {'type':'bind','fromid':fromId,'toid':toId};
+               var message = JSON.stringify(message);
+               ws.send(message);
+
+               get_headimg(fromId,toId);
+               get_membername(fromId,toId);
+              break;
+            case 'text':
+              $('.chat-content').append('<div class="chat-text section-left flex"><span class="char-img" style="background-image: url('+lujing+toimage+')"></span><span class="text"><i class="icon icon-sanjiao4 t-32"></i>'+text.msg+'</span></div>');
+
+               break;
+
+          }
 
 
       }
@@ -61,13 +90,33 @@
      $(".send-btn").click(function(){
        
          var text = $(".send-input").val();
+         var message = {data:text,type:"say",fromid:fromId,toid:toId};
+         var message = JSON.stringify(message);
+         
 
-         var message = '{"data":'+text+","+"type"+":"+"say"+'}';
-         ws.send(text);
-
+         ws.send(message);
+         $('.chat-content').append('<div class="chat-text section-right flex"><span class="text"><i class="icon icon-sanjiao3 t-32"></i>'+text+'</span><span class="char-img" style="background-image: url('+lujing+fromimage+')"></span> </div>');
          $(".send-input").val("");
      })
 
+
+     function save_message(text){
+       $.post(API+'save_message',text, function(data) {
+           console.log(data);
+       });
+     }
+     function get_headimg(fromId,toId){
+       $.post(API+'get_Name',{fromid:fromId,toid:toId}, function(data) {
+           $('.shop-titlte').text(data.tonickname);
+       },'json');
+     }
+     function get_membername(fromId,toId){
+       $.post(API+'getimage',{fromid:fromId,toid:toId},function(data) {
+           fromimage = data.fromimage;
+           toimage = data.toimage;
+
+       });
+     }
 
 </script>
 </body>
