@@ -7,9 +7,17 @@
     <link rel="stylesheet" type="text/css" href="__STATIC__/newcj/css/themes.css?v=2017129">
     <link rel="stylesheet" type="text/css" href="__STATIC__/newcj/css/h5app.css">
     <link rel="stylesheet" type="text/css" href="__STATIC__/newcj/fonts/iconfont.css?v=2016070717">
-    <script src="__STATIC__/newcj/js/jquery.min.js"></script>
+    <script src="__STATIC__/newcj/jquery.min1.js"></script>
     <script src="__STATIC__/newcj/js/dist/flexible/flexible_css.debug.js"></script>
     <script src="__STATIC__/newcj/js/dist/flexible/flexible.debug.js"></script>
+    <style type="text/css" media="screen">
+      .qqFace { margin-top: -189px; background: #fff; padding: 2px; border: 1px #dfe6f6 solid; }
+      .qqFace table td { padding:0.5px; }
+      .qqFace table td img { cursor: pointer;  }
+      .qqFace table td img:hover { border: 1px #0066cc solid; }
+      span { word-wrap:break-word; }
+    </style>
+    <link rel="stylesheet" href="__STATIC__/qqFace/css/reset.css">
 </head>
 <body ontouchstart>
 <div class='fui-page-group'>
@@ -39,15 +47,19 @@
     </div>
     <div class="fix-send flex footer-bar">
         <i class="icon icon-emoji1 t-50"></i>
-        <input class="send-input t-28" maxlength="200">
+        <input class="send-input t-28" id="saytext" maxlength="200">
         <input type="file" id="image" name="pic" style="display: none;">
         <i class="icon icon-add image t-50" style="color: #888;"></i>
         <span class="send-btn">发送</span>
     </div>
 </div>
 </div>
-
+<script type="text/javascript" src="__STATIC__/qqFace/js/jquery.qqFace.js"></script>
 <script>
+  
+
+
+
      var API = 'http://chat.com/api/Chat/';
      var lujing = 'http://chat.com/static/images/';
      var fromId = {$fromId};
@@ -74,7 +86,7 @@
                get_message(fromId,toId);
               break;
             case 'text':
-                $('.chat-content').append('<div class="chat-text section-left flex"><span class="char-img" style="background-image: url('+lujing+toimage+')"></span><span class="text"><i class="icon icon-sanjiao4 t-32"></i>'+text.msg+'</span></div>');
+                $('.chat-content').append('<div class="chat-text section-left flex"><span class="char-img" style="background-image: url('+lujing+toimage+')"></span><span class="text"><i class="icon icon-sanjiao4 t-32"></i>'+replace_em(text.msg)+'</span></div>');
                 $('.chat-content').scrollTop(3000);
                break;
             case 'online':
@@ -101,7 +113,7 @@
          var online = JSON.stringify(online);
          ws.send(online);//用户是否在线
          ws.send(message);
-         $('.chat-content').append('<div class="chat-text section-right flex"><span class="text"><i class="icon icon-sanjiao3 t-32"></i>'+text+'</span><span class="char-img" style="background-image: url('+lujing+fromimage+')"></span> </div>');
+         $('.chat-content').append('<div class="chat-text section-right flex"><span class="text"><i class="icon icon-sanjiao3 t-32"></i>'+replace_em(text)+'</span><span class="char-img" style="background-image: url('+lujing+fromimage+')"></span> </div>');
          $(".send-input").val("");
           $('.chat-content').scrollTop(3000);
      })
@@ -134,10 +146,20 @@
         //获取完之后 循环到 页面中
         $.each(data,function(index, el) {
            //如果记录中 fromid等于自己 那么就放在右边 否则左边
-           if(el.fromid == fromId){
-              $('.chat-content').append('<div class="chat-text section-right flex"><span class="text"><i class="icon icon-sanjiao3 t-32"></i>'+el.content+'</span><span class="char-img" style="background-image: url('+lujing+fromimage+')"></span> </div>');
+          if(el.fromid == fromId){
+            if(el.type == 2){
+                $('.chat-content').append('<div class="chat-text section-right flex"><span class="text"><i class="icon icon-sanjiao3 t-32"></i><img width="120em" height="120em" src="__ROOT__/uploads/'+el.content+'" alt=""></span><span class="char-img" style="background-image: url('+lujing+fromimage+')"></span> </div>');
+            }else{
+              $('.chat-content').append('<div class="chat-text section-right flex"><span class="text"><i class="icon icon-sanjiao3 t-32"></i>'+replace_em(el.content)+'</span><span class="char-img" style="background-image: url('+lujing+fromimage+')"></span> </div>');
+            }
+              
            }else{
-               $('.chat-content').append('<div class="chat-text section-left flex"><span class="char-img" style="background-image: url('+lujing+toimage+')"></span><span class="text"><i class="icon icon-sanjiao4 t-32"></i>'+el.content+'</span></div>');
+              if(el.type == 2){
+                $('.chat-content').append('<div class="chat-text section-left flex"><span class="char-img" style="background-image: url('+lujing+toimage+')"></span><span class="text"><i class="icon icon-sanjiao4 t-32"></i><img width="120em" height="120em" src="__ROOT__/uploads/'+el.content+'" alt=""></span></div>');
+              }else{
+                 $('.chat-content').append('<div class="chat-text section-left flex"><span class="char-img" style="background-image: url('+lujing+toimage+')"></span><span class="text"><i class="icon icon-sanjiao4 t-32"></i>'+replace_em(el.content)+'</span></div>');
+              }
+              
            }
 
            $('.chat-content').scrollTop(3000);
@@ -187,6 +209,36 @@
         })
         
     })
+
+    //表情事件
+    $(function(){
+
+      $('.icon-emoji1').qqFace({
+
+        id : 'facebox', 
+
+        assign:'saytext', 
+
+        path:'__STATIC__/qqFace/arclist/' //表情存放的路径
+
+      });
+     });
+
+    //查看结果
+
+    function replace_em(str){
+
+      str = str.replace(/\</g,'&lt;');
+
+      str = str.replace(/\>/g,'&gt;');
+
+      str = str.replace(/\n/g,'<br/>');
+
+      str = str.replace(/\[em_([0-9]*)\]/g,'<img src="__STATIC__/qqFace/arclist/$1.gif" border="0" />');
+
+      return str;
+
+    }
 </script>
 </body>
 </html>
